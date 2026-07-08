@@ -18,15 +18,25 @@ export async function proxy(request: NextRequest) {
   const isPrivatePath = PRIVATE_PREFIXES.some((prefix) =>
     pathname.startsWith(prefix),
   );
+  const isAuthPath = AUTH_PATHS.includes(pathname);
 
   if (isPublicPath) {
+    return response;
+  }
+
+  if (!isPrivatePath && !isAuthPath) {
     return response;
   }
 
   const supabaseUrl = process.env.NEXT_PUBLIC_SUPABASE_URL;
   const supabaseAnonKey = process.env.NEXT_PUBLIC_SUPABASE_ANON_KEY;
 
-  if (!supabaseUrl || !supabaseAnonKey) {
+  if (
+    !supabaseUrl ||
+    !supabaseAnonKey ||
+    (!supabaseUrl.startsWith("http://") &&
+      !supabaseUrl.startsWith("https://"))
+  ) {
     if (isPrivatePath) {
       const loginUrl = request.nextUrl.clone();
       loginUrl.pathname = "/login";
